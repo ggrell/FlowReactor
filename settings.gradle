@@ -1,0 +1,3 @@
+rootProject.name='FlowReactor'
+include ':sample'
+include ':flowreactor'
