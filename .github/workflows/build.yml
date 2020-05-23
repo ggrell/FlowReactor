@@ -20,9 +20,9 @@ jobs:
     - name: Restore Gradle caches
       uses: actions/cache@v1.2.0
         with:
-        path: ~/.gradle/caches
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
     - name: Build with Gradle
       run: ./gradlew clean assemble lint test jacocoTestReport coveralls
