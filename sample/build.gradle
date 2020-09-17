@@ -5,8 +5,8 @@ apply plugin: 'kotlin-android-extensions'
 android {
     compileSdkVersion 29
 
-    viewBinding {
-        enabled = true
+    buildFeatures {
+        viewBinding true
     }
 
     compileOptions {
@@ -41,13 +41,14 @@ dependencies {
     implementation project(path: ':flowreactor')
 
     implementation deps.kotlin.stdlib.common
-    implementation deps.kotlin.coroutines.jdk
+    implementation deps.kotlin.coroutines.core
     implementation deps.kotlin.coroutines.android
 
     implementation deps.support.appcompat
     implementation deps.support.core
     implementation deps.support.constraintlayout
     implementation deps.support.lifecycle
+    implementation deps.support.design
 
     implementation deps.bindings.core
     implementation deps.bindings.activity
@@ -56,6 +57,6 @@ dependencies {
 
     testImplementation deps.junit
 
-    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 }

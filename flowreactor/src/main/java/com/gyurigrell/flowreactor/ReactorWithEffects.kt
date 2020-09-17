@@ -9,7 +9,8 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.onEach
 
 /**
  * A Reactor is an UI-independent layer which manages the state of a view. The foremost role of a
@@ -44,20 +45,22 @@ abstract class ReactorWithEffects<Action, Mutation : MutationWithEffect<Effect>,
      * Checks to see if the mutation has an effect set. If it does, emits it via [ReactorWithEffects.effectChannel] and
      * swallows the [Mutation], otherwise lets the [Mutation] pass through.
      */
-    override fun transformMutation(mutation: Flow<Mutation>): Flow<Mutation> = mutation.flatMapConcat { m ->
-        // If its a mutation for triggering an effect, emit it as an Effect and prevent State changes
-        if (m.effect == null) {
-            mutation
-        } else {
-            effectChannel.send(m.effect!!)
-            emptyFlow<Mutation>()
+    override fun transformMutation(mutation: Flow<Mutation>): Flow<Mutation> = mutation
+        .flatMapLatest { m ->
+            println("[${Thread.currentThread().name}] ReactorWithEffects.transformMutation: $m")
+            // If its a mutation for triggering an effect, emit it as an Effect and prevent State changes
+            if (m.effect == null) {
+                mutation
+            } else {
+                effectChannel.send(m.effect!!)
+                emptyFlow()
+            }
         }
-    }
 
     /**
      * Override to modify the effect observable
      */
-    open fun transformEffect(effect: Flow<Effect>): Flow<Effect> = effect
+    open fun transformEffect(effect: Flow<Effect>): Flow<Effect> = effect.onEach { println("ReactorWithEffects.transformEffect - $it") }
 
     /**
      * The interface that needs to be applied to the [Mutation] sealed class defined in this [ReactorWithEffects]. It

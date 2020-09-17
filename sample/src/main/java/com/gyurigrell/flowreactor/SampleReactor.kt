@@ -78,7 +78,7 @@ class SampleReactor(
                 login(currentState.username, currentState.password)
             }
             if (success) {
-                emit(Mutation.EmitEffect(Effect.LoggedIn(Account(currentState.username,  null))))
+                emit(Mutation.EmitEffect(Effect.LoggedIn(Account(currentState.username,  "sample"))))
             } else {
                 emit(Mutation.EmitEffect(Effect.ShowError(R.string.app_name)))
             }
@@ -114,11 +114,11 @@ class SampleReactor(
             state
     }
 
-    override fun transformAction(action: Flow<Action>): Flow<Action> =
-        action.onEach { println("[${Thread.currentThread().name}] transformAction: $it") }
+//    override fun transformAction(action: Flow<Action>): Flow<Action> =
+//        action.onEach { println("[${Thread.currentThread().name}] transformAction: $it") }
 
-    override fun transformMutation(mutation: Flow<Mutation>): Flow<Mutation> =
-        mutation.onEach { println("[${Thread.currentThread().name}] transformMutation: $it") }
+//    override fun transformMutation(mutation: Flow<Mutation>): Flow<Mutation> =
+//        mutation.onEach { println("[${Thread.currentThread().name}] transformMutation: $it") }
 
     override fun transformState(state: Flow<State>): Flow<State> =
         state.onEach { println("[${Thread.currentThread().name}] transformState: $it") }

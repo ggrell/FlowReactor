@@ -7,7 +7,7 @@ apply plugin: 'com.github.dcendents.android-maven'
 
 dependencies {
     implementation deps.kotlin.stdlib.common
-    implementation deps.kotlin.coroutines.common
+    implementation deps.kotlin.coroutines.core
     implementation deps.kotlin.coroutines.android
 
     testImplementation deps.junit

@@ -5,6 +5,7 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.snackbar.Snackbar
 import com.gyurigrell.flowreactor.databinding.ActivityMainBinding
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -74,6 +75,24 @@ class MainActivity : AppCompatActivity() {
             .map { it.passwordEnabled }
             .onEach(binding.password.enabled())
             .launchIn(lifecycleScope)
+
+        reactor.effect
+            .onEach(this::handleEffect)
+            .launchIn(lifecycleScope)
+    }
+
+    private fun handleEffect(effect: SampleReactor.Effect) = when (effect) {
+        is SampleReactor.Effect.ShowError ->
+            Snackbar.make(binding.loginForm, effect.messageId, Snackbar.LENGTH_LONG).show()
+
+        is SampleReactor.Effect.LoggedIn ->
+            Snackbar.make(binding.loginForm, "Login succeeded", Snackbar.LENGTH_SHORT)
+                .addCallback(object : Snackbar.Callback() {
+                    override fun onDismissed(transientBottomBar: Snackbar?, event: Int) {
+                        finish()
+                    }
+                })
+                .show()
     }
 }
 

@@ -5,15 +5,17 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BroadcastChannel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.broadcastIn
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.scan
-import kotlinx.coroutines.launch
 
 /**
  * A Reactor is an UI-independent layer which manages the state of a view. The foremost role of a
@@ -49,21 +51,21 @@ abstract class Reactor<Action, Mutation, State>(
     var currentState: State = initialState
         private set
 
-    private val stateChannel = MutableStateFlow(initialState)
+//    private val stateChannel = MutableStateFlow(initialState)
+//
+//    /**
+//     * The state stream output from the reactor, emitting every time the state is modified via a mutation.
+//     */
+//    val state: Flow<State> = stateChannel
 
-    /**
-     * The state stream output from the reactor, emitting every time the state is modified via a mutation.
-     */
-    val state: Flow<State> = stateChannel
+    val state: Flow<State> by lazy { createStateStream(scope).receiveAsFlow() }
 
     /**
      * Commits mutation from the action. This is the best place to perform side-effects such as async tasks.
      * @param action the action initiated by the user on the view
      * @return an observable which emits 0..n mutations
      */
-    open fun mutate(action: Action): Flow<Mutation> {
-        return emptyFlow()
-    }
+    open fun mutate(action: Action): Flow<Mutation> = emptyFlow()
 
     /**
      * Given the current state and a mutation, returns the mutated state.
@@ -71,62 +73,101 @@ abstract class Reactor<Action, Mutation, State>(
      * @param mutation the mutation to apply to the state
      * @return the mutated state
      */
-    open fun reduce(state: State, mutation: Mutation): State {
-        return state
-    }
+    open fun reduce(state: State, mutation: Mutation): State = state
 
     /**
      *
      */
-    open fun transformAction(action: Flow<Action>): Flow<Action> {
-        return action
-    }
+    open fun transformAction(action: Flow<Action>): Flow<Action> =
+        action.onEach { println("transformAction: $it") }
 
     /**
      *
      */
-    open fun transformMutation(mutation: Flow<Mutation>): Flow<Mutation> {
-        return mutation
-    }
+    open fun transformMutation(mutation: Flow<Mutation>): Flow<Mutation> =
+        mutation.onEach { println("transformMutation: $it") }
 
     /**
      *
      */
-    open fun transformState(state: Flow<State>): Flow<State> {
-        return state
-    }
+    open fun transformState(state: Flow<State>): Flow<State> =
+        state.onEach { println("transformState: $it") }
 
-    init {
-        scope.launch {
-            val actionFlow = action.asFlow()
-            val transformedActionFlow = transformAction(actionFlow)
-            val mutationFlow = transformedActionFlow
-                .flatMapConcat { action ->
-                    try {
-                        mutate(action)
-                    } catch (ex: Throwable) {
-                        println("Encountered error executing action: $ex")
-                        emptyFlow<Mutation>()
+    /*
+        init {
+    //        scope.launch {
+                val actionFlow = action.asFlow()
+                val transformedActionFlow = transformAction(actionFlow)
+                val mutationFlow = transformedActionFlow
+                    .flatMapLatest { action ->
+                        try {
+                            mutate(action)
+                        } catch (ex: Throwable) {
+                            println("Encountered error executing action: $ex")
+                            emptyFlow()
+                        }
                     }
-                }
-            val transformedMutationFlow = transformMutation(mutationFlow)
-            val stateFlow = transformedMutationFlow
-                .scan(initialState) { state, mutation ->
-                    try {
-                        reduce(state, mutation)
-                    } catch (ex: Throwable) {
-                        println("Encountered error mutating state: $ex")
-                        state
+                val transformedMutationFlow = transformMutation(mutationFlow)
+                val stateFlow = transformedMutationFlow
+                    .scan(initialState) { state, mutation ->
+                        try {
+                            reduce(state, mutation)
+                        } catch (ex: Throwable) {
+                            println("Encountered error mutating state: $ex")
+                            state
+                        }
                     }
-                }
-            transformState(stateFlow)
-                .onCompletion {
-                    println("state flow completed, cancelling action")
-                }
-                .collect {
-                    currentState = it
-                    stateChannel.value = it
-                }
+                val transformedState = transformState(stateFlow)
+                    .onCompletion {
+                        println("state flow completed, cancelling action")
+                    }
+                    .onEach { currentState = it }
+                    .broadcastIn(scope)
+
+    //                .collect {
+    //                    currentState = it
+    //                    stateChannel.value = it
+    //                }
+    //        }
         }
+    */
+    private fun createStateStream(scope: CoroutineScope): ReceiveChannel<State> {
+        val actionFlow = action.asFlow()
+        val transformedActionFlow = transformAction(actionFlow)
+        val mutationFlow = transformedActionFlow
+            .flatMapLatest { action ->
+                try {
+                    mutate(action)
+                        .catch {
+                            println("Encountered error in flow while processing action: $it")
+                        }
+                } catch (ex: Throwable) {
+                    println("Encountered error processing action: $ex")
+                    emptyFlow()
+                }
+            }
+        val transformedMutationFlow = transformMutation(mutationFlow)
+        val stateFlow = transformedMutationFlow
+            .scan(initialState) { state, mutation ->
+                try {
+                    reduce(state, mutation)
+                } catch (ex: Throwable) {
+                    println("Encountered error mutating state: $ex")
+                    state
+                }
+            }
+            .catch {
+                println("Encountered error in flow while mutating state: $it")
+            }
+        val transformedState = transformState(stateFlow)
+            .onCompletion {
+                println("state flow completed, cancelling action")
+            }
+            .onEach {
+                currentState = it
+                println("State changed to: $currentState")
+            }
+            .broadcastIn(scope)
+        return transformedState.openSubscription()
     }
 }

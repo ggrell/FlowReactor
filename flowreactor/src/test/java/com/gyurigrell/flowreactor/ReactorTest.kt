@@ -5,31 +5,42 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.toCollection
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.test.TestCoroutineScope
+import kotlinx.coroutines.test.runBlockingTest
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.core.IsEqual.equalTo
+import org.junit.After
 import org.junit.Test
 
 @FlowPreview
 @ExperimentalCoroutinesApi
 class ReactorTest {
+    private val scope = TestCoroutineScope()
+
+    @After
+    fun teardown() {
+        scope.cleanupTestCoroutines()
+    }
+
     @Test
     @FlowPreview
-    fun `each method is invoked`() = runBlocking {
-        val reactor = TestReactor(this)
+    fun `each method is invoked`() = runBlockingTest {
+        // Arrange
+        val reactor = TestReactor(scope)
+        val results = mutableListOf<List<String>>()
 
-        launch {
-            reactor.action.send(mutableListOf("action"))
-            reactor.action.send(mutableListOf("secondAction"))
-            reactor.action.close()
-        }
+        reactor.state.onEach { results.add(it) }.launchIn(scope)
 
-        val result = reactor.state.toCollection(mutableListOf())
+        // Act
+        reactor.action.send(mutableListOf("action"))
+        reactor.action.send(mutableListOf("secondAction"))
+
+        // Assert
         assertThat(
-            result, equalTo(
+            results, equalTo(
                 listOf(
                     listOf("transformedState"),
                     listOf(
@@ -57,48 +68,49 @@ class ReactorTest {
     }
 
     @Test
-    fun `state replay current state`() = runBlocking {
+    fun `state replay current state`() = runBlockingTest {
         // Arrange
-        val reactor = CounterReactor(this)
+        val reactor = CounterReactor(scope)
+        val results = mutableListOf<Int>()
+        reactor.state.onEach { results.add(it) }.launchIn(scope)
 
-        // Act
-        launch {
-            reactor.action.send(Unit) // state: 1
-            reactor.action.send(Unit) // state: 2
-            reactor.action.close()
-        }
+        assertThat(results, equalTo(listOf(0)))
+
+        reactor.action.send(Unit) // state: 1
+        reactor.action.send(Unit) // state: 2
+
+        assertThat(results, equalTo(listOf(0, 1, 2)))
 
         // Assert
-        val output = reactor.state.toCollection(mutableListOf())
-        assertThat(output, equalTo(listOf(0, 1, 2)))
+        assertThat(results, equalTo(listOf(0, 1, 2)))
     }
 
     @Test
-    fun `stream ignores error from mutate`() = runBlocking {
+    fun `stream ignores error from mutate`() = runBlockingTest {
         // Arrange
-        val reactor = CounterReactor(this)
-        reactor.stateForTriggerError = 1
+        val reactor = CounterReactor(scope)
+        reactor.stateForTriggerError = 2
+
+        val results = mutableListOf<Int>()
+        reactor.state.onEach { results.add(it) }.launchIn(scope)
 
         // Act
-        launch {
-            reactor.action.send(Unit)
-            reactor.action.send(Unit)
-            reactor.action.send(Unit)
-            reactor.action.send(Unit)
-            reactor.action.send(Unit)
-            reactor.action.close()
-        }
+        reactor.action.send(Unit)
+        reactor.action.send(Unit)
+        reactor.action.send(Unit)
+        reactor.action.send(Unit)
+        reactor.action.send(Unit)
 
         // Assert
-        val output = reactor.state.toCollection(mutableListOf())
-        assertThat(output, equalTo(listOf(0, 1, 2, 3, 4, 5)))
+        assertThat(results, equalTo(listOf(0, 1, 2, 3, 4, 5)))
     }
     
     @FlowPreview
     class TestReactor(scope: CoroutineScope) : Reactor<List<String>, List<String>, List<String>>(scope, listOf()) {
         // 1. ["action"] + ["transformedAction"]
         override fun transformAction(action: Flow<List<String>>): Flow<List<String>> {
-            return action.map { it + "transformedAction" }
+            return super.transformAction(action).map { it + "transformedAction" }
+//            return action.map { it + "transformedAction" }
         }
 
         // 2. ["action", "transformedAction"] + ["mutation"]
@@ -108,7 +120,8 @@ class ReactorTest {
 
         // 3. ["action", "transformedAction", "mutation"] + ["transformedMutation"]
         override fun transformMutation(mutation: Flow<List<String>>): Flow<List<String>> {
-            return mutation.map { it + "transformedMutation" }
+            return super.transformMutation(mutation).map { it + "transformMutation" }
+//            return mutation.map { it + "transformedMutation" }
         }
 
         // 4. [] + ["action", "transformedAction", "mutation", "transformedMutation"]
@@ -118,7 +131,8 @@ class ReactorTest {
 
         // 5. ["action", "transformedAction", "mutation", "transformedMutation"] + ["transformedState"]
         override fun transformState(state: Flow<List<String>>): Flow<List<String>> {
-            return state.map { it + "transformedState" }
+            return super.transformState(state).map { it + "transformedState" }
+//            return state.map { it + "transformedState" }
         }
     }
 
@@ -132,7 +146,7 @@ class ReactorTest {
                 emit(action)
                 throw TestError()
             }
-            
+
             stateForTriggerCompleted -> flow {
                 emit(action)
             }
