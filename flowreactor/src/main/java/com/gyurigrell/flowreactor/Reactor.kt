@@ -2,7 +2,6 @@ package com.gyurigrell.flowreactor
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BroadcastChannel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -32,7 +31,7 @@ import kotlinx.coroutines.flow.scan
  * @property initialState the initial state of the reactor, from which the {@see currentState} will be initialized.
  * via {@link logDebug}
  */
-@FlowPreview
+//@FlowPreview
 @ExperimentalCoroutinesApi
 abstract class Reactor<Action, Mutation, State>(
     scope: CoroutineScope,
@@ -79,58 +78,20 @@ abstract class Reactor<Action, Mutation, State>(
      *
      */
     open fun transformAction(action: Flow<Action>): Flow<Action> =
-        action.onEach { println("transformAction: $it") }
+        action.onEach { println("[${Thread.currentThread().name}] transformAction: $it") }
 
     /**
      *
      */
     open fun transformMutation(mutation: Flow<Mutation>): Flow<Mutation> =
-        mutation.onEach { println("transformMutation: $it") }
+        mutation.onEach { println("[${Thread.currentThread().name}] transformMutation: $it") }
 
     /**
      *
      */
     open fun transformState(state: Flow<State>): Flow<State> =
-        state.onEach { println("transformState: $it") }
+        state.onEach { println("[${Thread.currentThread().name}] transformState: $it") }
 
-    /*
-        init {
-    //        scope.launch {
-                val actionFlow = action.asFlow()
-                val transformedActionFlow = transformAction(actionFlow)
-                val mutationFlow = transformedActionFlow
-                    .flatMapLatest { action ->
-                        try {
-                            mutate(action)
-                        } catch (ex: Throwable) {
-                            println("Encountered error executing action: $ex")
-                            emptyFlow()
-                        }
-                    }
-                val transformedMutationFlow = transformMutation(mutationFlow)
-                val stateFlow = transformedMutationFlow
-                    .scan(initialState) { state, mutation ->
-                        try {
-                            reduce(state, mutation)
-                        } catch (ex: Throwable) {
-                            println("Encountered error mutating state: $ex")
-                            state
-                        }
-                    }
-                val transformedState = transformState(stateFlow)
-                    .onCompletion {
-                        println("state flow completed, cancelling action")
-                    }
-                    .onEach { currentState = it }
-                    .broadcastIn(scope)
-
-    //                .collect {
-    //                    currentState = it
-    //                    stateChannel.value = it
-    //                }
-    //        }
-        }
-    */
     private fun createStateStream(scope: CoroutineScope): ReceiveChannel<State> {
         val actionFlow = action.asFlow()
         val transformedActionFlow = transformAction(actionFlow)
@@ -150,7 +111,10 @@ abstract class Reactor<Action, Mutation, State>(
         val stateFlow = transformedMutationFlow
             .scan(initialState) { state, mutation ->
                 try {
-                    reduce(state, mutation)
+                    println("[${Thread.currentThread().name}] State before reduce: $state")
+                    val newState = reduce(state, mutation)
+                    println("[${Thread.currentThread().name}] State after reduce: $newState")
+                    newState
                 } catch (ex: Throwable) {
                     println("Encountered error mutating state: $ex")
                     state
@@ -161,11 +125,11 @@ abstract class Reactor<Action, Mutation, State>(
             }
         val transformedState = transformState(stateFlow)
             .onCompletion {
-                println("state flow completed, cancelling action")
+                println("[${Thread.currentThread().name}] state flow completed, cancelling action")
             }
             .onEach {
                 currentState = it
-                println("State changed to: $currentState")
+                println("[${Thread.currentThread().name}] currentState changed to: $currentState")
             }
             .broadcastIn(scope)
         return transformedState.openSubscription()

@@ -36,7 +36,6 @@ class ReactorTest {
 
         // Act
         reactor.action.send(mutableListOf("action"))
-        reactor.action.send(mutableListOf("secondAction"))
 
         // Assert
         assertThat(
@@ -45,18 +44,6 @@ class ReactorTest {
                     listOf("transformedState"),
                     listOf(
                         "action",
-                        "transformedAction",
-                        "mutation",
-                        "transformedMutation",
-                        "transformedState"
-                    ),
-                    listOf(
-                        "action",
-                        "transformedAction",
-                        "mutation",
-                        "transformedMutation",
-                        "transformedState",
-                        "secondAction",
                         "transformedAction",
                         "mutation",
                         "transformedMutation",
@@ -109,8 +96,7 @@ class ReactorTest {
     class TestReactor(scope: CoroutineScope) : Reactor<List<String>, List<String>, List<String>>(scope, listOf()) {
         // 1. ["action"] + ["transformedAction"]
         override fun transformAction(action: Flow<List<String>>): Flow<List<String>> {
-            return super.transformAction(action).map { it + "transformedAction" }
-//            return action.map { it + "transformedAction" }
+            return action.map { it + "transformedAction" }
         }
 
         // 2. ["action", "transformedAction"] + ["mutation"]
@@ -120,8 +106,7 @@ class ReactorTest {
 
         // 3. ["action", "transformedAction", "mutation"] + ["transformedMutation"]
         override fun transformMutation(mutation: Flow<List<String>>): Flow<List<String>> {
-            return super.transformMutation(mutation).map { it + "transformMutation" }
-//            return mutation.map { it + "transformedMutation" }
+            return mutation.map { it + "transformedMutation" }
         }
 
         // 4. [] + ["action", "transformedAction", "mutation", "transformedMutation"]
@@ -131,8 +116,7 @@ class ReactorTest {
 
         // 5. ["action", "transformedAction", "mutation", "transformedMutation"] + ["transformedState"]
         override fun transformState(state: Flow<List<String>>): Flow<List<String>> {
-            return super.transformState(state).map { it + "transformedState" }
-//            return state.map { it + "transformedState" }
+            return state.map { it + "transformedState" }
         }
     }
 
