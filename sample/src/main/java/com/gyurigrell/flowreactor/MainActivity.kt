@@ -57,7 +57,7 @@ class MainActivity : AppCompatActivity() {
 
         reactor.state
             .map { it.loginEnabled }
-            .onEach { binding.loginButton.isEnabled = it }
+            .onEach(binding.loginButton.enabled())
             .launchIn(lifecycleScope)
 
         reactor.state
