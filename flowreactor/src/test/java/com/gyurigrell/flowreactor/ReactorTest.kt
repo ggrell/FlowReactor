@@ -2,127 +2,135 @@ package com.gyurigrell.flowreactor
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.toCollection
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.test.TestCoroutineScope
+import kotlinx.coroutines.test.runBlockingTest
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.core.IsEqual.equalTo
+import org.junit.After
 import org.junit.Test
 
-@FlowPreview
 @ExperimentalCoroutinesApi
 class ReactorTest {
+    private val reactorScope = TestCoroutineScope()
+
+    @After
+    fun teardown() {
+        reactorScope.cleanupTestCoroutines()
+    }
+
     @Test
-    @FlowPreview
-    fun `each method is invoked`() = runBlocking {
-        val reactor = TestReactor(this)
+    fun `each method is invoked`() = runBlockingTest {
+        // Arrange
+        val reactor = TestReactor(reactorScope)
+        val results = mutableListOf<List<String>>()
+        reactor.state.onEach { results.add(it) }.launchIn(reactorScope)
 
-        launch {
-            reactor.action.send(mutableListOf("action"))
-            reactor.action.send(mutableListOf("secondAction"))
-            reactor.action.close()
-        }
+        // Act
+        reactor.action.emit(mutableListOf("action"))
 
-        val result = reactor.state.toCollection(mutableListOf())
-        assertThat(
-            result, equalTo(
-                listOf(
-                    listOf("transformedState"),
-                    listOf(
-                        "action",
-                        "transformedAction",
-                        "mutation",
-                        "transformedMutation",
-                        "transformedState"
-                    ),
-                    listOf(
-                        "action",
-                        "transformedAction",
-                        "mutation",
-                        "transformedMutation",
-                        "transformedState",
-                        "secondAction",
-                        "transformedAction",
-                        "mutation",
-                        "transformedMutation",
-                        "transformedState"
-                    )
-                )
-            )
+        // Assert
+        val expected = listOf(
+            listOf("transformedState"),
+            listOf("action", "transformedAction", "mutation", "transformedMutation", "transformedState")
         )
+        assertThat(results, equalTo(expected))
     }
 
     @Test
-    fun `state replay current state`() = runBlocking {
+    fun `each subscription receives values`() = runBlockingTest {
         // Arrange
-        val reactor = CounterReactor(this)
+        val reactor = TestReactor(reactorScope)
+
+        val resultsLowerCase = mutableListOf<List<String>>()
+        reactor.state
+            .map { list -> list.map { it.toLowerCase() }  }
+            .onEach { resultsLowerCase.add(it) }
+            .launchIn(reactorScope)
+
+        val resultsUpperCase = mutableListOf<List<String>>()
+        reactor.state
+            .map { list -> list.map { it.toUpperCase() }  }
+            .onEach { resultsUpperCase.add(it) }
+            .launchIn(reactorScope)
 
         // Act
-        launch {
-            reactor.action.send(Unit) // state: 1
-            reactor.action.send(Unit) // state: 2
-            reactor.action.close()
-        }
+        reactor.action.emit(mutableListOf("action"))
 
         // Assert
-        val output = reactor.state.toCollection(mutableListOf())
-        assertThat(output, equalTo(listOf(0, 1, 2)))
+        val expectedLowerCase = listOf(
+            listOf("transformedstate"),
+            listOf("action", "transformedaction", "mutation", "transformedmutation", "transformedstate")
+        )
+        assertThat(resultsLowerCase, equalTo(expectedLowerCase))
+        val expectedUpperCase = listOf(
+            listOf("TRANSFORMEDSTATE"),
+            listOf("ACTION", "TRANSFORMEDACTION", "MUTATION", "TRANSFORMEDMUTATION", "TRANSFORMEDSTATE")
+        )
+        assertThat(resultsUpperCase, equalTo(expectedUpperCase))
     }
 
     @Test
-    fun `stream ignores error from mutate`() = runBlocking {
+    fun `state replay current state`() = runBlockingTest {
         // Arrange
-        val reactor = CounterReactor(this)
-        reactor.stateForTriggerError = 1
+        val reactor = CounterReactor(reactorScope)
+        val results = mutableListOf<Int>()
+        reactor.state.onEach { results.add(it) }.launchIn(reactorScope)
 
         // Act
-        launch {
-            reactor.action.send(Unit)
-            reactor.action.send(Unit)
-            reactor.action.send(Unit)
-            reactor.action.send(Unit)
-            reactor.action.send(Unit)
-            reactor.action.close()
-        }
+        reactor.action.emit(Unit) // state: 1
+        reactor.action.emit(Unit) // state: 2
 
         // Assert
-        val output = reactor.state.toCollection(mutableListOf())
-        assertThat(output, equalTo(listOf(0, 1, 2, 3, 4, 5)))
+        assertThat(results, equalTo(listOf(0, 1, 2)))
     }
-    
-    @FlowPreview
+
+    @Test
+    fun `stream ignores error from mutate`() = runBlockingTest {
+        // Arrange
+        val reactor = CounterReactor(reactorScope)
+        reactor.stateForTriggerError = 2
+
+        val results = mutableListOf<Int>()
+        reactor.state.onEach { results.add(it) }.launchIn(reactorScope)
+
+        // Act
+        reactor.action.emit(Unit)
+        reactor.action.emit(Unit)
+        reactor.action.emit(Unit)
+        reactor.action.emit(Unit)
+        reactor.action.emit(Unit)
+
+        // Assert
+        assertThat(results, equalTo(listOf(0, 1, 2, 3, 4, 5)))
+    }
+
     class TestReactor(scope: CoroutineScope) : Reactor<List<String>, List<String>, List<String>>(scope, listOf()) {
         // 1. ["action"] + ["transformedAction"]
-        override fun transformAction(action: Flow<List<String>>): Flow<List<String>> {
-            return action.map { it + "transformedAction" }
-        }
+        override fun transformAction(action: Flow<List<String>>) =
+            action.map { it + "transformedAction" }
 
         // 2. ["action", "transformedAction"] + ["mutation"]
-        override fun mutate(action: List<String>): Flow<List<String>> {
-            return flow { emit(action + "mutation") }
-        }
+        override fun mutate(action: List<String>) =
+            flow { emit(action + "mutation") }
 
         // 3. ["action", "transformedAction", "mutation"] + ["transformedMutation"]
-        override fun transformMutation(mutation: Flow<List<String>>): Flow<List<String>> {
-            return mutation.map { it + "transformedMutation" }
-        }
+        override fun transformMutation(mutation: Flow<List<String>>) =
+            mutation.map { it + "transformedMutation" }
 
         // 4. [] + ["action", "transformedAction", "mutation", "transformedMutation"]
-        override fun reduce(state: List<String>, mutation: List<String>): List<String> {
-            return state + mutation
-        }
+        override fun reduce(state: List<String>, mutation: List<String>) =
+            state + mutation
 
         // 5. ["action", "transformedAction", "mutation", "transformedMutation"] + ["transformedState"]
-        override fun transformState(state: Flow<List<String>>): Flow<List<String>> {
-            return state.map { it + "transformedState" }
-        }
+        override fun transformState(state: Flow<List<String>>) =
+            state.map { it + "transformedState" }
     }
 
-    @FlowPreview
     class CounterReactor(scope: CoroutineScope) : Reactor<Unit, Unit, Int>(scope, initialState = 0) {
         var stateForTriggerError: Int? = null
         var stateForTriggerCompleted: Int? = null
@@ -132,7 +140,7 @@ class ReactorTest {
                 emit(action)
                 throw TestError()
             }
-            
+
             stateForTriggerCompleted -> flow {
                 emit(action)
             }

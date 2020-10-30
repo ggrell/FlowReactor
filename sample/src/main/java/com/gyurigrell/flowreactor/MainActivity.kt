@@ -7,7 +7,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.gyurigrell.flowreactor.databinding.ActivityMainBinding
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -15,8 +14,9 @@ import kotlinx.coroutines.flow.onEach
 import reactivecircus.flowbinding.android.view.clicks
 import reactivecircus.flowbinding.android.widget.textChanges
 import reactivecircus.flowbinding.lifecycle.events
+import kotlin.time.ExperimentalTime
 
-@FlowPreview
+@ExperimentalTime
 @ExperimentalCoroutinesApi
 class MainActivity : AppCompatActivity() {
 
@@ -35,22 +35,22 @@ class MainActivity : AppCompatActivity() {
 
         lifecycle.events()
             .filter { it == Lifecycle.Event.ON_START }
-            .onEach { reactor.action.send(SampleReactor.Action.EnterScreen) }
+            .onEach { reactor.action.emit(SampleReactor.Action.EnterScreen) }
             .launchIn(lifecycleScope)
 
         binding.username
             .textChanges()
-            .onEach { reactor.action.send(SampleReactor.Action.UsernameChanged(it.toString())) }
+            .onEach { reactor.action.emit(SampleReactor.Action.UsernameChanged(it.toString())) }
             .launchIn(lifecycleScope)
 
         binding.password
             .textChanges()
-            .onEach { reactor.action.send(SampleReactor.Action.PasswordChanged(it.toString())) }
+            .onEach { reactor.action.emit(SampleReactor.Action.PasswordChanged(it.toString())) }
             .launchIn(lifecycleScope)
 
         binding.loginButton
             .clicks()
-            .onEach { reactor.action.send(SampleReactor.Action.Login) }
+            .onEach { reactor.action.emit(SampleReactor.Action.Login) }
             .launchIn(lifecycleScope)
 
         // State bindings to views
