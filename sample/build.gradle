@@ -40,7 +40,6 @@ dependencies {
     implementation project(path: ':flowreactor')
 
     implementation deps.kotlin.stdlib.common
-    implementation deps.kotlin.coroutines.jdk
     implementation deps.kotlin.coroutines.android
 
     implementation deps.support.appcompat
@@ -48,13 +47,13 @@ dependencies {
     implementation deps.support.constraintlayout
     implementation deps.support.lifecycle
 
-    implementation deps.bindings.core
     implementation deps.bindings.activity
     implementation deps.bindings.lifecycle
     implementation deps.bindings.android
 
     testImplementation deps.junit
+    testImplementation deps.kotlin.coroutines.test
 
-    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 }

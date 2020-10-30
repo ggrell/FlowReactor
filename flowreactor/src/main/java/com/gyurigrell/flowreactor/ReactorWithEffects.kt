@@ -3,13 +3,9 @@ package com.gyurigrell.flowreactor
 import com.gyurigrell.flowreactor.ReactorWithEffects.MutationWithEffect
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.channels.BroadcastChannel
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.transform
 
 /**
  * A Reactor is an UI-independent layer which manages the state of a view. The foremost role of a
@@ -27,7 +23,6 @@ import kotlinx.coroutines.flow.flatMapConcat
  * @property initialState the initial state of the reactor, from which the {@see currentState} will be initialized.
  */
 @ExperimentalCoroutinesApi
-@FlowPreview
 abstract class ReactorWithEffects<Action, Mutation : MutationWithEffect<Effect>, State, Effect>(
     scope: CoroutineScope,
     initialState: State
@@ -35,27 +30,27 @@ abstract class ReactorWithEffects<Action, Mutation : MutationWithEffect<Effect>,
     /**
      * The effect stream output from the reactor.
      */
-    @Suppress("unused")
-    val effect: Flow<Effect> by lazy { transformEffect(effectChannel.asFlow()) }
+    val effect: Flow<Effect> by lazy { transformEffect(effectChannel) }
 
-    private val effectChannel = BroadcastChannel<Effect>(Channel.CONFLATED)
+    private val effectChannel = MutableSharedFlow<Effect>()
 
     /**
      * Checks to see if the mutation has an effect set. If it does, emits it via [ReactorWithEffects.effectChannel] and
      * swallows the [Mutation], otherwise lets the [Mutation] pass through.
      */
-    override fun transformMutation(mutation: Flow<Mutation>): Flow<Mutation> = mutation.flatMapConcat { m ->
-        // If its a mutation for triggering an effect, emit it as an Effect and prevent State changes
-        if (m.effect == null) {
-            mutation
-        } else {
-            effectChannel.send(m.effect!!)
-            emptyFlow<Mutation>()
+    override fun transformMutation(mutation: Flow<Mutation>): Flow<Mutation> = mutation
+        .transform { m ->
+            if (m.effect == null) {
+                // This is not an effect, so just emit the mutation
+                emit(m)
+            } else {
+                // This is an effect, so emit the effect and ignore the mutation
+                effectChannel.emit(m.effect!!)
+            }
         }
-    }
 
     /**
-     * Override to modify the effect observable
+     * Override to modify the emitted effects
      */
     open fun transformEffect(effect: Flow<Effect>): Flow<Effect> = effect
 

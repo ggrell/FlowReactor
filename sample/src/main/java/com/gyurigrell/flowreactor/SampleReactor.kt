@@ -5,7 +5,6 @@ import androidx.annotation.StringRes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -13,15 +12,18 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
 import java.io.Serializable
+import kotlin.time.ExperimentalTime
+import kotlin.time.seconds
 
 /**
  * Do not check in without adding a comment!
  */
-@FlowPreview
+@ExperimentalTime
 @ExperimentalCoroutinesApi
 class SampleReactor(
-    scope: CoroutineScope
-) : ReactorWithEffects<SampleReactor.Action, SampleReactor.Mutation, SampleReactor.State, SampleReactor.Effect>(scope, State()) {
+    scope: CoroutineScope,
+    initialState: State = State()
+) : ReactorWithEffects<SampleReactor.Action, SampleReactor.Mutation, SampleReactor.State, SampleReactor.Effect>(scope, initialState) {
 
     sealed class Action {
         object EnterScreen : Action()
@@ -90,7 +92,7 @@ class SampleReactor(
 
     private suspend fun login(username: String, password: String): Boolean {
         println("[${Thread.currentThread().name}] Logging in user $username with password $password, takes 1 second")
-        delay(1000)
+        delay(3.seconds)
         return true
     }
 
@@ -107,7 +109,7 @@ class SampleReactor(
         is Mutation.SetPassword ->
             state.copy(
                 password = mutation.password,
-                isUsernameValid = mutation.password.isNotBlank()
+                isPasswordValid = mutation.password.isNotBlank()
             )
 
         else ->
