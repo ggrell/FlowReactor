@@ -21,8 +21,9 @@ import kotlin.time.seconds
 @ExperimentalTime
 @ExperimentalCoroutinesApi
 class SampleReactor(
-    scope: CoroutineScope
-) : ReactorWithEffects<SampleReactor.Action, SampleReactor.Mutation, SampleReactor.State, SampleReactor.Effect>(scope, State()) {
+    scope: CoroutineScope,
+    initialState: State = State()
+) : ReactorWithEffects<SampleReactor.Action, SampleReactor.Mutation, SampleReactor.State, SampleReactor.Effect>(scope, initialState) {
 
     sealed class Action {
         object EnterScreen : Action()
@@ -108,7 +109,7 @@ class SampleReactor(
         is Mutation.SetPassword ->
             state.copy(
                 password = mutation.password,
-                isUsernameValid = mutation.password.isNotBlank()
+                isPasswordValid = mutation.password.isNotBlank()
             )
 
         else ->
