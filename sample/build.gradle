@@ -50,7 +50,6 @@ dependencies {
     implementation deps.support.lifecycle
     implementation deps.support.design
 
-    implementation deps.bindings.core
     implementation deps.bindings.activity
     implementation deps.bindings.lifecycle
     implementation deps.bindings.android

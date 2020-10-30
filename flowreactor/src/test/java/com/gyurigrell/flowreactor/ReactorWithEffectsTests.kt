@@ -12,7 +12,6 @@ import com.gyurigrell.flowreactor.ReactorWithEffectsTests.TestReactor.Effect
 import com.gyurigrell.flowreactor.ReactorWithEffectsTests.TestReactor.State
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
@@ -28,55 +27,67 @@ import org.junit.Test
  * Unit tests for [ReactorWithEffects]
  */
 @ExperimentalCoroutinesApi
-@FlowPreview
 class ReactorWithEffectsTests {
-    private val scope = TestCoroutineScope()
+    private val reactorScope = TestCoroutineScope()
 
     @After
     fun teardown() {
-        scope.cleanupTestCoroutines()
+        reactorScope.cleanupTestCoroutines()
     }
 
     @Test
     fun `SimpleAction updates State simpleAction to true`() = runBlockingTest {
         // Arrange
-        val reactor = TestReactor(scope)
+        val reactor = TestReactor(reactorScope)
+
         val states = mutableListOf<State>()
-        reactor.state.onEach { states.add(it) }.launchIn(scope)
+        reactor.state.onEach { states.add(it) }.launchIn(reactorScope)
+
+        val effects = mutableListOf<Effect>()
+        reactor.effect.onEach { effects.add(it) }.launchIn(reactorScope)
 
         // Act
-        reactor.action.send(Action.SimpleAction)
+        reactor.action.emit(Action.SimpleAction)
 
         // Assert
         assertThat(states, equalTo(listOf(State(false), State(true))))
+        assertThat(effects, equalTo(emptyList()))
     }
 
     @Test
     fun `ActionWithValue updates State actionWithValue to correct string`() = runBlockingTest {
         // Arrange
-        val reactor = TestReactor(scope)
-        val theValue = "I love apple pie"
+        val reactor = TestReactor(reactorScope)
+
         val states = mutableListOf<State>()
-        reactor.state.onEach { states.add(it) }.launchIn(scope)
+        reactor.state.onEach { states.add(it) }.launchIn(reactorScope)
+
+        val effects = mutableListOf<Effect>()
+        reactor.effect.onEach { effects.add(it) }.launchIn(reactorScope)
+
+        val theValue = "I love apple pie"
 
         // Act
-        reactor.action.send(Action.ActionWithValue(theValue))
+        reactor.action.emit(Action.ActionWithValue(theValue))
 
         // Assert
         assertThat(states, equalTo(listOf(State(), State(false, theValue))))
+        assertThat(effects, equalTo(emptyList()))
     }
 
     @Test
     fun `ActionFiresEffectOne emits the effect `() = runBlockingTest {
         // Arrange
-        val reactor = TestReactor(scope)
+        val reactor = TestReactor(reactorScope)
+
         val states = mutableListOf<State>()
-        reactor.state.onEach { states.add(it) }.launchIn(scope)
+        reactor.state.onEach { states.add(it) }.launchIn(reactorScope)
+
         val effects = mutableListOf<Effect>()
-        reactor.effect.onEach { effects.add(it) }.launchIn(scope)
+        reactor.effect.onEach { effects.add(it) }.launchIn(reactorScope)
 
         // Act
-        reactor.action.send(Action.ActionFiresEffectOne)
+        reactor.action.emit(Action.ActionFiresEffectOne)
 
         // Assert
         assertThat(states, equalTo(listOf(State())))
@@ -84,16 +95,42 @@ class ReactorWithEffectsTests {
     }
 
     @Test
+    fun `ActionFiresEffectOne emits the effect to multiple subscribers`() = runBlockingTest {
+        // Arrange
+        val reactor = TestReactor(reactorScope)
+
+        val states = mutableListOf<State>()
+        reactor.state.onEach { states.add(it) }.launchIn(reactorScope)
+
+        val effects1 = mutableListOf<Effect>()
+        reactor.effect.onEach { effects1.add(it) }.launchIn(reactorScope)
+
+        val effects2 = mutableListOf<Effect>()
+        reactor.effect.onEach { effects2.add(it) }.launchIn(reactorScope)
+
+        // Act
+        reactor.action.emit(Action.ActionFiresEffectOne)
+
+        // Assert
+        assertThat(states, equalTo(listOf(State())))
+        assertThat(effects1, equalTo(listOf(Effect.EffectOne)))
+        assertThat(effects2, equalTo(listOf(Effect.EffectOne)))
+    }
+
+    @Test
     fun `ActionFiresEffectWithValue emits the effect with the correct value`() = runBlockingTest {
         // Arrange
-        val reactor = TestReactor(scope)
+        val reactor = TestReactor(reactorScope)
         val theValue = "Millions of peaches, peaches for me"
-        val states = mutableListOf<State>()
-        reactor.state.onEach { states.add(it) }.launchIn(scope)
-        val effects = mutableListOf<Effect>()
-        reactor.effect.onEach { effects.add(it) }.launchIn(scope)
 
-        reactor.action.send(Action.ActionFiresEffectWithValue(theValue))
+        val states = mutableListOf<State>()
+        reactor.state.onEach { states.add(it) }.launchIn(reactorScope)
+
+        val effects = mutableListOf<Effect>()
+        reactor.effect.onEach { effects.add(it) }.launchIn(reactorScope)
+
+        // Act
+        reactor.action.emit(Action.ActionFiresEffectWithValue(theValue))
 
         // Assert
         assertThat(states, equalTo(listOf(State())))

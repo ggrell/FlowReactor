@@ -2,19 +2,16 @@ package com.gyurigrell.flowreactor
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.BroadcastChannel
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.broadcastIn
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.scan
+import kotlinx.coroutines.flow.shareIn
 
 /**
  * A Reactor is an UI-independent layer which manages the state of a view. The foremost role of a
@@ -31,7 +28,6 @@ import kotlinx.coroutines.flow.scan
  * @property initialState the initial state of the reactor, from which the {@see currentState} will be initialized.
  * via {@link logDebug}
  */
-//@FlowPreview
 @ExperimentalCoroutinesApi
 abstract class Reactor<Action, Mutation, State>(
     scope: CoroutineScope,
@@ -40,24 +36,18 @@ abstract class Reactor<Action, Mutation, State>(
     /**
      * Accepts the actions from the view, which then potentially cause mutations of the current state.
      */
-    @Suppress("MemberVisibilityCanBePrivate")
-    val action = BroadcastChannel<Action>(Channel.BUFFERED)
+    val action = MutableSharedFlow<Action>()
 
     /**
      * The current state of the view to which the reactor is bound.
      */
-    @Suppress("MemberVisibilityCanBePrivate")
     var currentState: State = initialState
         private set
 
-//    private val stateChannel = MutableStateFlow(initialState)
-//
-//    /**
-//     * The state stream output from the reactor, emitting every time the state is modified via a mutation.
-//     */
-//    val state: Flow<State> = stateChannel
-
-    val state: Flow<State> by lazy { createStateStream(scope).receiveAsFlow() }
+    /**
+     * The state stream output from the reactor, emitting every time the state is modified via a mutation.
+     */
+    val state: Flow<State> by lazy { createStateStream(scope) }
 
     /**
      * Commits mutation from the action. This is the best place to perform side-effects such as async tasks.
@@ -75,35 +65,28 @@ abstract class Reactor<Action, Mutation, State>(
     open fun reduce(state: State, mutation: Mutation): State = state
 
     /**
-     *
+     * Override to apply transformation to each action
      */
-    open fun transformAction(action: Flow<Action>): Flow<Action> =
-        action.onEach { println("[${Thread.currentThread().name}] transformAction: $it") }
+    open fun transformAction(action: Flow<Action>): Flow<Action> = action
 
     /**
-     *
+     * Override to apply transformation to each mutation
      */
-    open fun transformMutation(mutation: Flow<Mutation>): Flow<Mutation> =
-        mutation.onEach { println("[${Thread.currentThread().name}] transformMutation: $it") }
+    open fun transformMutation(mutation: Flow<Mutation>): Flow<Mutation> = mutation
 
     /**
-     *
+     * Override to apply transformation to each state
      */
-    open fun transformState(state: Flow<State>): Flow<State> =
-        state.onEach { println("[${Thread.currentThread().name}] transformState: $it") }
+    open fun transformState(state: Flow<State>): Flow<State> = state
 
-    private fun createStateStream(scope: CoroutineScope): ReceiveChannel<State> {
-        val actionFlow = action.asFlow()
-        val transformedActionFlow = transformAction(actionFlow)
+    private fun createStateStream(scope: CoroutineScope): SharedFlow<State> {
+        val transformedActionFlow = transformAction(action)
         val mutationFlow = transformedActionFlow
             .flatMapLatest { action ->
                 try {
-                    mutate(action)
-                        .catch {
-                            println("Encountered error in flow while processing action: $it")
-                        }
+                    // If an error is caught in mutate, emit nothing but keep going
+                    mutate(action).catch {}
                 } catch (ex: Throwable) {
-                    println("Encountered error processing action: $ex")
                     emptyFlow()
                 }
             }
@@ -111,27 +94,17 @@ abstract class Reactor<Action, Mutation, State>(
         val stateFlow = transformedMutationFlow
             .scan(initialState) { state, mutation ->
                 try {
-                    println("[${Thread.currentThread().name}] State before reduce: $state")
-                    val newState = reduce(state, mutation)
-                    println("[${Thread.currentThread().name}] State after reduce: $newState")
-                    newState
+                    reduce(state, mutation)
                 } catch (ex: Throwable) {
-                    println("Encountered error mutating state: $ex")
+                    // Caught an error, return current state
                     state
                 }
             }
-            .catch {
-                println("Encountered error in flow while mutating state: $it")
-            }
-        val transformedState = transformState(stateFlow)
-            .onCompletion {
-                println("[${Thread.currentThread().name}] state flow completed, cancelling action")
-            }
+            .catch {} // If error caught in flow, emit nothing but keep going
+        return transformState(stateFlow)
             .onEach {
                 currentState = it
-                println("[${Thread.currentThread().name}] currentState changed to: $currentState")
             }
-            .broadcastIn(scope)
-        return transformedState.openSubscription()
+            .shareIn(scope, SharingStarted.Lazily, replay = 1)
     }
 }
