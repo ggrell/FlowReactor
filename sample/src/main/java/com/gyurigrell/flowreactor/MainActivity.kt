@@ -1,7 +1,6 @@
 package com.gyurigrell.flowreactor
 
 import android.os.Bundle
-import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -31,33 +30,35 @@ class MainActivity : AppCompatActivity() {
 
         reactor = SampleReactor(lifecycleScope)
 
-        // Control bindings to reactor
+        bindActions(reactor)
+        bindViewState(reactor)
+    }
 
+    private fun bindActions(reactor: SampleReactor) {
         lifecycle.events()
             .filter { it == Lifecycle.Event.ON_START }
             .onEach { reactor.action.emit(SampleReactor.Action.EnterScreen) }
             .launchIn(lifecycleScope)
 
-        binding.username
-            .textChanges()
+        binding.username.textChanges()
+            .skipInitialValue()
             .onEach { reactor.action.emit(SampleReactor.Action.UsernameChanged(it.toString())) }
             .launchIn(lifecycleScope)
 
-        binding.password
-            .textChanges()
+        binding.password.textChanges()
+            .skipInitialValue()
             .onEach { reactor.action.emit(SampleReactor.Action.PasswordChanged(it.toString())) }
             .launchIn(lifecycleScope)
 
-        binding.loginButton
-            .clicks()
+        binding.login.clicks()
             .onEach { reactor.action.emit(SampleReactor.Action.Login) }
             .launchIn(lifecycleScope)
+    }
 
-        // State bindings to views
-
+    private fun bindViewState(reactor: SampleReactor) {
         reactor.state
             .map { it.loginEnabled }
-            .onEach(binding.loginButton.enabled())
+            .onEach(binding.login::setEnabled)
             .launchIn(lifecycleScope)
 
         reactor.state
@@ -67,20 +68,12 @@ class MainActivity : AppCompatActivity() {
 
         reactor.state
             .map { it.usernameEnabled }
-            .onEach(binding.username.enabled())
+            .onEach(binding.username::setEnabled)
             .launchIn(lifecycleScope)
 
         reactor.state
             .map { it.passwordEnabled }
-            .onEach(binding.password.enabled())
+            .onEach(binding.password::setEnabled)
             .launchIn(lifecycleScope)
     }
-}
-
-private fun View.enabled(): suspend (Boolean) -> Unit {
-    return { value -> isEnabled = value }
-}
-
-fun View.visibility(visibilityWhenFalse: Int = View.GONE): suspend (Boolean) -> Unit {
-    return { value -> visibility = if (value) View.VISIBLE else visibilityWhenFalse }
 }
