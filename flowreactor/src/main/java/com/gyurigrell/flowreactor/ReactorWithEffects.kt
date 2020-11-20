@@ -1,11 +1,11 @@
 package com.gyurigrell.flowreactor
 
-import com.gyurigrell.flowreactor.ReactorWithEffects.MutationWithEffect
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.transform
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.collect
 
 /**
  * A Reactor is an UI-independent layer which manages the state of a view. The foremost role of a
@@ -23,52 +23,35 @@ import kotlinx.coroutines.flow.transform
  * @property initialState the initial state of the reactor, from which the {@see currentState} will be initialized.
  */
 @ExperimentalCoroutinesApi
-abstract class ReactorWithEffects<Action, Mutation : MutationWithEffect<Effect>, State, Effect>(
+abstract class ReactorWithEffects<Action, Mutation, State, Effect>(
     scope: CoroutineScope,
     initialState: State
 ) : Reactor<Action, Mutation, State>(scope, initialState) {
     /**
      * The effect stream output from the reactor.
      */
-    val effect: Flow<Effect> by lazy { transformEffect(effectChannel) }
-
-    private val effectChannel = MutableSharedFlow<Effect>()
-
-    /**
-     * Checks to see if the mutation has an effect set. If it does, emits it via [ReactorWithEffects.effectChannel] and
-     * swallows the [Mutation], otherwise lets the [Mutation] pass through.
-     */
-    override fun transformMutation(mutation: Flow<Mutation>): Flow<Mutation> = mutation
-        .transform { m ->
-            if (m.effect == null) {
-                // This is not an effect, so just emit the mutation
-                emit(m)
-            } else {
-                // This is an effect, so emit the effect and ignore the mutation
-                effectChannel.emit(m.effect!!)
-            }
-        }
+    val effect: Flow<Effect> by lazy { transformEffect(effectFlow) }
 
     /**
      * Override to modify the emitted effects
      */
-    open fun transformEffect(effect: Flow<Effect>): Flow<Effect> = effect
+    open fun transformEffect(effect: Flow<Effect>): Flow<Effect> = effect //.onEach { println("transformed $it") }
+
+    private val effectFlow = MutableSharedFlow<Effect>()
 
     /**
-     * The interface that needs to be applied to the [Mutation] sealed class defined in this [ReactorWithEffects]. It
-     * applies a field named [effect] which defaults to `null`, meaning that mutation doesn't emit effects. Generally
-     * there should only be a single mutation that has an override where it provides an effect.
-     * @param Effect this is just the [Effect] type defined in the reactor.
-     * ```
-     *     sealed class Mutation: MutationWithEffect<Effect> {
-     *         object Mutation1 : Mutation()
-     *         data class Mutation2(val someValue): Mutation()
-     *         data class EmitEffect(override val effect: Effect): Mutation()
-     *     }
-     *  ```
+     * Emits all effects provided by the Observable
+     * @param effect a Flow that emits effects
      */
-    interface MutationWithEffect<Effect> {
-        val effect: Effect?
-            get() = null
+    protected suspend fun emitEffect(effect: Flow<Effect>) {
+        effect.collect { effectFlow.emit(it) }
+    }
+
+    /**
+     * Simplified way to emits effects
+     * @param effect one or more Effects to be emitted
+     */
+    protected suspend fun emitEffect(vararg effect: Effect) {
+        effect.asFlow().collect { effectFlow.emit(it) }
     }
 }

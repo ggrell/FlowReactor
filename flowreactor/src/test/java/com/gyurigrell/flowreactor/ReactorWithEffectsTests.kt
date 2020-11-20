@@ -148,10 +148,9 @@ class ReactorWithEffectsTests {
             data class ActionFiresEffectWithValue(val theValue: String) : Action()
         }
 
-        sealed class Mutation : MutationWithEffect<Effect> {
+        sealed class Mutation {
             object SimpleActionMutation : Mutation()
             data class ActionWithValueMutation(val theValue: String) : Mutation()
-            data class FireEffect(override val effect: Effect) : Mutation()
         }
 
         data class State(
@@ -172,18 +171,16 @@ class ReactorWithEffectsTests {
                 flow { emit(Mutation.ActionWithValueMutation(action.theValue)) }
 
             is Action.ActionFiresEffectOne ->
-                flow { emit(Mutation.FireEffect(Effect.EffectOne)) }
+                flow { emitEffect(Effect.EffectOne) } // Note, flow doesn't emit
 
             is Action.ActionFiresEffectWithValue ->
-                flow { emit(Mutation.FireEffect(Effect.EffectWithValue(action.theValue))) }
+                flow { emitEffect(Effect.EffectWithValue(action.theValue)) } // Note, flow doesn't emit
         }
 
         override fun reduce(state: State, mutation: Mutation): State = when (mutation) {
             is Mutation.SimpleActionMutation -> state.copy(simpleAction = true)
 
             is Mutation.ActionWithValueMutation -> state.copy(actionWithValue = mutation.theValue)
-
-            is Mutation.FireEffect -> state // This will never happen, but need to be exhaustive
         }
     }
 }

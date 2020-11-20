@@ -2,13 +2,13 @@
 
 buildscript {
     ext.buildConfig = [
-            minSdk    : 15,
+            minSdk    : 21,
             compileSdk: 28,
             targetSdk : 28
     ]
 
     ext.versions = [
-            kotlin          : '1.4.10',
+            kotlin          : '1.4.20',
             kotlinCoroutines: '1.4.0',
             dokka           : '0.9.18',
             flowBinding     : "1.0.0-beta02",
@@ -62,7 +62,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.1.0'
+        classpath 'com.android.tools.build:gradle:4.1.1'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$versions.kotlin"
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:$versions.dokka"
         classpath "org.jetbrains.dokka:dokka-android-gradle-plugin:$versions.dokka"
