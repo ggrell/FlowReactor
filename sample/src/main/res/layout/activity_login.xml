@@ -8,19 +8,6 @@
     tools:context=".MainActivity"
     tools:ignore="UnusedResources">
 
-    <!--    <AutoCompleteTextView-->
-    <!--        android:id="@+id/username"-->
-    <!--        android:layout_width="0dp"-->
-    <!--        android:layout_height="wrap_content"-->
-    <!--        android:autofillHints="username"-->
-    <!--        android:ems="10"-->
-    <!--        android:hint="Email Address"-->
-    <!--        android:inputType="textEmailAddress"-->
-    <!--        app:layout_constraintEnd_toEndOf="parent"-->
-    <!--        app:layout_constraintStart_toStartOf="parent"-->
-    <!--        app:layout_constraintTop_toTopOf="parent"-->
-    <!--        tools:ignore="HardcodedText" />-->
-
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/usernameLayout"
         style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.ExposedDropdownMenu"
@@ -35,7 +22,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:autofillHints="username"
-            android:hint="@string/email_address_hint"
+            android:hint="@string/username_hint"
             android:inputType="textEmailAddress" />
     </com.google.android.material.textfield.TextInputLayout>
 
