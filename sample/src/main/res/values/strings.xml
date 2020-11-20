@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">FlowReactor</string>
+    <string name="permission_rationale">"Contacts permissions are needed for providing email completions."</string>
+    <string name="login_error">Failed to log in, please try again!</string>
+    <string name="email_address_hint">Email Address</string>
+    <string name="password_hint">Password</string>
+    <string name="empty_username">Email address cannot be empty</string>
+    <string name="empty_password">Password cannot be empty</string>
 </resources>

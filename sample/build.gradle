@@ -3,7 +3,7 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion buildConfig.compileSdk
 
     buildFeatures {
         viewBinding true
@@ -20,8 +20,8 @@ android {
 
     defaultConfig {
         applicationId "com.constantcontact.flowreactor"
-        minSdkVersion 21
-        targetSdkVersion 29
+        minSdkVersion buildConfig.compileSdk
+        targetSdkVersion buildConfig.targetSdk
         versionCode 1
         versionName "1.0"
 
@@ -47,6 +47,7 @@ dependencies {
     implementation deps.support.core
     implementation deps.support.constraintlayout
     implementation deps.support.lifecycle
+    implementation deps.support.design
 
     implementation deps.bindings.activity
     implementation deps.bindings.lifecycle

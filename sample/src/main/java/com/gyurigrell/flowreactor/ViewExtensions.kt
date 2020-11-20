@@ -5,6 +5,7 @@ package com.gyurigrell.flowreactor
 
 import android.view.View
 import androidx.annotation.CheckResult
+import com.google.android.material.textfield.TextInputLayout
 
 /**
  * An action which sets the visibility property of `view`.
@@ -16,7 +17,6 @@ import androidx.annotation.CheckResult
  * `View.GONE`).
  */
 @CheckResult
-//@JvmOverloads
 fun View.visibility(visibilityWhenFalse: Int = View.GONE): suspend (Boolean) -> Unit {
     require(visibilityWhenFalse != View.VISIBLE) {
         "Setting visibility to VISIBLE when false would have no effect."
@@ -25,4 +25,15 @@ fun View.visibility(visibilityWhenFalse: Int = View.GONE): suspend (Boolean) -> 
         "Must set visibility to INVISIBLE or GONE when false."
     }
     return { value -> visibility = if (value) View.VISIBLE else visibilityWhenFalse }
+}
+
+/**
+ * An action which sets the error string of a [TextInputLayout].
+ *
+ * *Warning:* The created observable keeps a strong reference to `view`. Unsubscribe to free this
+ * reference.
+ */
+@CheckResult
+fun TextInputLayout.errorRes(): suspend (Int) -> Unit {
+    return { value -> error = if (value == 0) "" else context.getString(value) }
 }

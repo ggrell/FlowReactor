@@ -9,9 +9,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
 import java.io.Serializable
+import kotlin.random.Random
 import kotlin.time.ExperimentalTime
 import kotlin.time.seconds
 
@@ -22,8 +22,12 @@ import kotlin.time.seconds
 @ExperimentalCoroutinesApi
 class SampleReactor(
     scope: CoroutineScope,
+    private val contactService: ContactService,
     initialState: State = State()
-) : ReactorWithEffects<SampleReactor.Action, SampleReactor.Mutation, SampleReactor.State, SampleReactor.Effect>(scope, initialState) {
+) : ReactorWithEffects<SampleReactor.Action, SampleReactor.Mutation, SampleReactor.State, SampleReactor.Effect>(
+    scope,
+    initialState
+) {
 
     sealed class Action {
         object EnterScreen : Action()
@@ -33,12 +37,11 @@ class SampleReactor(
         object PopulateAutoComplete : Action()
     }
 
-    sealed class Mutation: MutationWithEffect<Effect> {
+    sealed class Mutation {
         data class SetUsername(val username: String) : Mutation()
         data class SetPassword(val password: String) : Mutation()
         data class SetBusy(val busy: Boolean) : Mutation()
         data class SetAutoCompleteEmails(val emails: List<String>) : Mutation()
-        data class EmitEffect(override val effect: Effect) : Mutation()
     }
 
     sealed class Effect {
@@ -48,7 +51,9 @@ class SampleReactor(
 
     data class State(
         val username: String = "",
+        @StringRes val usernameMessage: Int = 0,
         val password: String = "",
+        @StringRes val passwordMessage: Int = 0,
         val environment: String = "",
         val isUsernameValid: Boolean = true,
         val isPasswordValid: Boolean = true,
@@ -76,52 +81,53 @@ class SampleReactor(
 
         is Action.Login -> flow {
             emit(Mutation.SetBusy(true))
-            val success = withContext(Dispatchers.IO) {
-                login(currentState.username, currentState.password)
-            }
+            println("[${Thread.currentThread().name}] Set to busy, about to log in")
+            val success = login(currentState.username, currentState.password)
             if (success) {
-                emit(Mutation.EmitEffect(Effect.LoggedIn(Account(currentState.username,  null))))
+                emitEffect(Effect.LoggedIn(Account(currentState.username, "Sample")))
             } else {
-                emit(Mutation.EmitEffect(Effect.ShowError(R.string.app_name)))
+                emitEffect(Effect.ShowError(R.string.login_error))
             }
             emit(Mutation.SetBusy(false))
         }
 
+        is Action.PopulateAutoComplete -> flow {
+            val emails = contactService.loadEmails()
+            emit(Mutation.SetAutoCompleteEmails(emails))
+        }
         else -> emptyFlow()
     }
 
-    private suspend fun login(username: String, password: String): Boolean {
-        println("[${Thread.currentThread().name}] Logging in user $username with password $password, takes 1 second")
-        delay(3.seconds)
-        return true
+    private suspend fun login(username: String, password: String): Boolean = withContext(Dispatchers.IO) {
+        println("[${Thread.currentThread().name}] Logging in user $username with password $password")
+        delay(1.seconds)
+        println("[${Thread.currentThread().name}] login completed")
+        Random.nextBoolean()
     }
 
     override fun reduce(state: State, mutation: Mutation): State = when (mutation) {
         is Mutation.SetBusy ->
             state.copy(isBusy = mutation.busy)
 
-        is Mutation.SetUsername ->
+        is Mutation.SetUsername -> {
+            val isUsernameValid = mutation.username.isNotBlank()
             state.copy(
                 username = mutation.username,
-                isUsernameValid = mutation.username.isNotBlank()
+                isUsernameValid = isUsernameValid,
+                usernameMessage = if (isUsernameValid) 0 else R.string.empty_username
             )
+        }
 
-        is Mutation.SetPassword ->
+        is Mutation.SetPassword -> {
+            val isPasswordValid = mutation.password.isNotBlank()
             state.copy(
                 password = mutation.password,
-                isPasswordValid = mutation.password.isNotBlank()
+                isPasswordValid = isPasswordValid,
+                passwordMessage = if (isPasswordValid) 0 else R.string.empty_password
             )
+        }
 
-        else ->
-            state
+        is Mutation.SetAutoCompleteEmails ->
+            state.copy(autoCompleteEmails = mutation.emails)
     }
-
-    override fun transformAction(action: Flow<Action>): Flow<Action> =
-        action.onEach { println("[${Thread.currentThread().name}] transformAction: $it") }
-
-    override fun transformMutation(mutation: Flow<Mutation>): Flow<Mutation> =
-        mutation.onEach { println("[${Thread.currentThread().name}] transformMutation: $it") }
-
-    override fun transformState(state: Flow<State>): Flow<State> =
-        state.onEach { println("[${Thread.currentThread().name}] transformState: $it") }
 }
