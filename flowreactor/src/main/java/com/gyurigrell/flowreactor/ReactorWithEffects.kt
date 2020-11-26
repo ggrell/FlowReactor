@@ -37,7 +37,7 @@ abstract class ReactorWithEffects<Action, Mutation, State, Effect>(
     /**
      * Override to modify the emitted effects
      */
-    open fun transformEffect(effect: Flow<Effect>): Flow<Effect> = effect //.onEach { println("transformed $it") }
+    open fun transformEffect(effect: Flow<Effect>): Flow<Effect> = effect
 
     private val effectFlow = MutableSharedFlow<Effect>()
 

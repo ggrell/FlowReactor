@@ -1,1 +1,4 @@
-lgtm.check_lgtm
+warnings_next_generation.report(
+    include: ['android-lint', 'java', 'detekt'],
+    inline: true
+)
