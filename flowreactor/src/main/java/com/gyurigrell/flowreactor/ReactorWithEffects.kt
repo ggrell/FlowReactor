@@ -13,14 +13,16 @@ import kotlinx.coroutines.flow.collect
  * delegates all logic to its reactor. A reactor has no dependency to a view, so it can be easily
  * tested.
  *
- * @param Action the type of the action, which is generally either an enum or a Kotlin sealed class. Actions need to be
- * publicly available since actions are passed to the reactor via this type (using the {@see action} relay observer.
- * @param Mutation the type of the mutation. This type is only used internally in the reactor to map an action to  0..n
- * mutations. It must implement [MutationWithEffect], and a single mutation should override `effect` and provide a
- * non-null value.
+ * @param Action the type of the action, which is generally either an enum or a Kotlin sealed class.
+ * Actions need to be publicly available since actions are passed to the reactor via this type
+ * (using the {@see action} relay observer.
+ * @param Mutation the type of the mutation. This type is only used internally in the reactor to map
+ * an action to  0..n mutations.
  * @param State the type of the state that the reactor holds and modifies.
- * @param Effect the type of the effect that is emitted for side-effects that don't modify state
- * @property initialState the initial state of the reactor, from which the {@see currentState} will be initialized.
+ * @param Effect the type of the effect that is emitted for side-effects that don't modify state. Effects
+ * can be emitted using the [emitEffect] functions.
+ * @property initialState the initial state of the reactor, from which the {@see currentState} will be
+ * initialized.
  */
 @ExperimentalCoroutinesApi
 abstract class ReactorWithEffects<Action, Mutation, State, Effect>(

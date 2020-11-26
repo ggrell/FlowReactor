@@ -1,5 +1,6 @@
 package com.gyurigrell.flowreactor
 
+import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -9,6 +10,7 @@ import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import kotlin.time.ExperimentalTime
 
@@ -20,7 +22,13 @@ import kotlin.time.ExperimentalTime
 @ExperimentalTime
 @ExperimentalCoroutinesApi
 class SampleReactorTest {
+    private lateinit var contactService: ContactService
     private val reactorScope = TestCoroutineScope()
+
+    @Before
+    fun setUp() {
+        contactService = mockk()
+    }
 
     @After
     fun teardown() {
@@ -42,7 +50,7 @@ class SampleReactorTest {
     fun `Given an initial state, When screen is launched, Then there are no events emitted`() = runBlockingTest {
         // Arrange
         val initialState = SampleReactor.State()
-        val reactor = SampleReactor(reactorScope, initialState)
+        val reactor = SampleReactor(reactorScope, contactService, initialState)
         val states = mutableListOf<SampleReactor.State>()
         reactor.state.onEach { states.add(it) }.launchIn(reactorScope)
 
@@ -57,7 +65,7 @@ class SampleReactorTest {
     fun `Given an initial state, When username changes, Then state username updated and is valid`() = runBlockingTest {
         // Arrange
         val initialState = SampleReactor.State()
-        val reactor = SampleReactor(reactorScope, initialState)
+        val reactor = SampleReactor(reactorScope, contactService, initialState)
         val states = mutableListOf<SampleReactor.State>()
         reactor.state.onEach { states.add(it) }.launchIn(reactorScope)
         val username = "MaxHeadroom"
@@ -74,7 +82,7 @@ class SampleReactorTest {
     fun `Given an state with valid username, When set to empty, Then the username is not valid`() = runBlockingTest {
         // Arrange
         val initialState = SampleReactor.State(username = "MaxHeadroom", isUsernameValid = true)
-        val reactor = SampleReactor(reactorScope, initialState)
+        val reactor = SampleReactor(reactorScope, contactService, initialState)
         val states = mutableListOf<SampleReactor.State>()
         reactor.state.onEach { states.add(it) }.launchIn(reactorScope)
 
@@ -82,14 +90,17 @@ class SampleReactorTest {
         reactor.action.emit(SampleReactor.Action.UsernameChanged(""))
 
         // Assert
-        assertThat(states, equalTo(listOf(initialState, SampleReactor.State(username = "", isUsernameValid = false))))
+        assertThat(states, equalTo(listOf(
+            initialState,
+            SampleReactor.State(username = "", isUsernameValid = false, usernameMessage = R.string.empty_username)
+        )))
     }
 
     @Test
     fun `Given an initial state, When password changes, Then state password updated and is valid`() = runBlockingTest {
         // Arrange
         val initialState = SampleReactor.State()
-        val reactor = SampleReactor(reactorScope, initialState)
+        val reactor = SampleReactor(reactorScope, contactService, initialState)
         val states = mutableListOf<SampleReactor.State>()
         reactor.state.onEach { states.add(it) }.launchIn(reactorScope)
         val password = "123456"
@@ -105,7 +116,7 @@ class SampleReactorTest {
     fun `Given an state with valid password, When set to empty, Then the password is not valid`() = runBlockingTest {
         // Arrange
         val initialState = SampleReactor.State(password = "123456", isPasswordValid = true)
-        val reactor = SampleReactor(reactorScope, initialState)
+        val reactor = SampleReactor(reactorScope, contactService, initialState)
         val states = mutableListOf<SampleReactor.State>()
         reactor.state.onEach { states.add(it) }.launchIn(reactorScope)
 
@@ -113,6 +124,9 @@ class SampleReactorTest {
         reactor.action.emit(SampleReactor.Action.PasswordChanged(""))
 
         // Assert
-        assertThat(states, equalTo(listOf(initialState, SampleReactor.State(password = "", isPasswordValid = false))))
+        assertThat(states, equalTo(listOf(
+            initialState,
+            SampleReactor.State(password = "", isPasswordValid = false, passwordMessage = R.string.empty_password)
+        )))
     }
 }
