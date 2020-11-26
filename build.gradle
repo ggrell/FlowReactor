@@ -9,7 +9,7 @@ buildscript {
 
     ext.versions = [
             kotlin          : '1.4.20',
-            kotlinCoroutines: '1.4.0',
+            kotlinCoroutines: '1.4.1',
             dokka           : '0.9.18',
             flowBinding     : "1.0.0-beta02",
     ]
