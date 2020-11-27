@@ -15,13 +15,13 @@ import kotlinx.coroutines.flow.collect
  *
  * @param Action the type of the action, which is generally either an enum or a Kotlin sealed class.
  * Actions need to be publicly available since actions are passed to the reactor via this type
- * (using the {@see action} relay observer.
+ * (using the [action] relay observer.
  * @param Mutation the type of the mutation. This type is only used internally in the reactor to map
  * an action to  0..n mutations.
  * @param State the type of the state that the reactor holds and modifies.
  * @param Effect the type of the effect that is emitted for side-effects that don't modify state. Effects
  * can be emitted using the [emitEffect] functions.
- * @property initialState the initial state of the reactor, from which the {@see currentState} will be
+ * @property initialState the initial state of the reactor, from which the [currentState] will be
  * initialized.
  */
 @ExperimentalCoroutinesApi

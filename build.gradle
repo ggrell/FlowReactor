@@ -14,6 +14,7 @@ buildscript {
             flowBinding     : "1.0.0-beta02",
 
             // Testing
+            jacoco          : '0.8.5',
             mockk           : "1.10.2",
             kluent          : "1.60",
             detekt          : "1.15.0-RC1"
@@ -74,7 +75,6 @@ buildscript {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$versions.kotlin"
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:$versions.dokka"
         classpath "org.jetbrains.dokka:dokka-android-gradle-plugin:$versions.dokka"
-        classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.8.3'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
     }
 }

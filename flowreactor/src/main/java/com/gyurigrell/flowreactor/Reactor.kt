@@ -20,12 +20,12 @@ import kotlinx.coroutines.flow.shareIn
  * tested.
  *
  * @param Action the type of the action, which is generally either an enum or a Kotlin sealed class. Actions need to be
- * publicly available since actions are passed to the reactor via this type (using the {@see action} relay observer.
+ * publicly available since actions are passed to the reactor via this type (using the [action] relay observer).
  * @param Mutation the type of the mutation. This type is only used internally in the reactor to map an action to  0..n
  * mutations.
  * @param State the type of the state that the reactor holds and modifies.
  * @param scope the coroutine scope in which to execute the reactor instance
- * @property initialState the initial state of the reactor, from which the {@see currentState} will be initialized.
+ * @property initialState the initial state of the reactor, from which the [currentState] will be initialized.
  */
 @ExperimentalCoroutinesApi
 abstract class Reactor<Action, Mutation, State>(
