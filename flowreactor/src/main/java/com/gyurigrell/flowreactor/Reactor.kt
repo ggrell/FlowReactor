@@ -79,7 +79,6 @@ abstract class Reactor<Action, Mutation, State>(
     open fun transformState(state: Flow<State>): Flow<State> = state
 
     private fun createStateStream(scope: CoroutineScope): SharedFlow<State> {
-        val unused = "Hi"
         val transformedActionFlow = transformAction(action)
         val mutationFlow = transformedActionFlow
             .flatMapLatest { action ->
