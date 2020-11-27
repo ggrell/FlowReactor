@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>TooGenericExceptionCaught:Reactor.kt$Reactor$ex: Throwable</ID>
+    <ID>UnnecessaryAbstractClass:Reactor.kt$Reactor&lt;Action, Mutation, State&gt;</ID>
+  </CurrentIssues>
+</SmellBaseline>

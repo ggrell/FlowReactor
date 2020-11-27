@@ -1,1 +1,3 @@
 warnings_next_generation.report
+junit.parse "flowreactor/build/test-results/test/*.xml"
+junit.report
