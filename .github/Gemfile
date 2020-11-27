@@ -2,6 +2,5 @@ source "https://rubygems.org"
 
 gem "danger"
 gem "danger-junit"
-gem "danger-warnings_next_generation"
 gem "danger-android_lint"
-gem "danger-junit"
+gem "danger-detekt"

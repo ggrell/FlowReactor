@@ -1,3 +1,4 @@
-warnings_next_generation.report
+kotlin_detekt.detekt
+android_lint.lint
 junit.parse "flowreactor/build/test-results/test/*.xml"
 junit.report
