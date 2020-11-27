@@ -1,4 +1,1 @@
-warnings_next_generation.report(
-    include: ['android-lint', 'java', 'detekt'],
-    inline: true
-)
+warnings_next_generation.report
