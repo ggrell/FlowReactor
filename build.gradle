@@ -16,6 +16,7 @@ buildscript {
             // Testing
             mockk           : "1.10.2",
             kluent          : "1.60",
+            detekt          : "1.15.0-RC1"
     ]
 
     ext.deps = [
@@ -76,6 +77,10 @@ buildscript {
         classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.8.3'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
     }
+}
+
+plugins {
+    id("io.gitlab.arturbosch.detekt").version("1.15.0-RC1")
 }
 
 allprojects {

@@ -4,8 +4,11 @@ apply plugin: 'jacoco'
 apply plugin: 'org.jetbrains.dokka'
 apply plugin: 'com.github.kt3k.coveralls'
 apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'io.gitlab.arturbosch.detekt'
 
 dependencies {
+    detektPlugins "io.gitlab.arturbosch.detekt:detekt-formatting:${versions.detekt}"
+
     implementation deps.kotlin.stdlib.common
     implementation deps.kotlin.coroutines.core
 
@@ -31,6 +34,25 @@ compileTestKotlin {
 dokka {
     outputFormat = 'javadoc'
     outputDirectory = "$buildDir/docs/javadoc"
+}
+
+detekt {
+    config = files("detekt.yml")
+    baseline = file("detekt-baseline.xml")
+    buildUponDefaultConfig = true
+    reports {
+        xml {
+            enabled = true
+            destination = file("build/reports/detekt/detekt.xml")
+        }
+        html {
+            enabled = true
+            destination = file("build/reports/detekt/detekt.html")
+        }
+        txt {
+            enabled = false
+        }
+    }
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {
