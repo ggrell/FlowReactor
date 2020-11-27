@@ -30,7 +30,8 @@ jobs:
         path: vendor/bundle
         key: ${{ runner.os }}-gems-${{ hashFiles('.github/Gemfile') }}
         restore-keys: ${{ runner.os }}-gems-
-    - run: |
+    - name: Gradle assemble check
+      run: |
         echo "::add-matcher::.github/gradle-java-matcher.json"
         echo "::add-matcher::.github/kotlin-error-matcher.json"
         echo "::add-matcher::.github/kotlin-warning-matcher.json"
