@@ -17,8 +17,7 @@ jobs:
           ~/.gradle/caches
           ~/.gradle/wrapper
         key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
+        restore-keys: ${{ runner.os }}-gradle
     - name: Unit tests
       run: ./gradlew clean assemble check jacocoTestReport
     - name: Upload test reports
@@ -41,8 +40,7 @@ jobs:
         with:
           path: vendor/bundle
           key: ${{ runner.os }}-gems-${{ hashFiles('Gemfile') }} # change your gemfile path
-          restore-keys: |
-            ${{ runner.os }}-gems-
+          restore-keys: ${{ runner.os }}-gems
       - run: pwd
       - uses: MeilCli/danger-action@v5
         with:
