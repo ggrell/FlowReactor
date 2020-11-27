@@ -1,8 +1,8 @@
 github.dismiss_out_of_range_messages
 
 kotlin_detekt.gradle_task = "detekt"
-kotlin_detekt.report_file = "./flowreactor/build/reports/detekt/detekt.xml"
+kotlin_detekt.report_file = "flowreactor/build/reports/detekt/detekt.xml"
 kotlin_detekt.detekt
 
-junit.parse "./flowreactor/build/test-results/test/*.xml"
+junit.parse "flowreactor/build/test-results/test/*.xml"
 junit.report
