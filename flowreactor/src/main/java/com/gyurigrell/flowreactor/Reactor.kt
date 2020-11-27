@@ -26,7 +26,6 @@ import kotlinx.coroutines.flow.shareIn
  * @param State the type of the state that the reactor holds and modifies.
  * @param scope the coroutine scope in which to execute the reactor instance
  * @property initialState the initial state of the reactor, from which the {@see currentState} will be initialized.
- * via {@link logDebug}
  */
 @ExperimentalCoroutinesApi
 abstract class Reactor<Action, Mutation, State>(
