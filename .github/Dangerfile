@@ -1,4 +1,7 @@
+kotlin_detekt.report_file = "build/reports/detekt/detekt.xml"
 kotlin_detekt.detekt
+
 android_lint.lint
+
 junit.parse "flowreactor/build/test-results/test/*.xml"
 junit.report
