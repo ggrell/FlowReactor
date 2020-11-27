@@ -53,6 +53,6 @@ jobs:
         name: test-reports
         path: '**/build/reports/tests/'
     - name: Coveralls
-      uses: coverallsapp/github-action@v1
+      uses: coverallsapp/github-action@master
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
