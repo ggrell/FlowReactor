@@ -19,7 +19,7 @@ jobs:
         key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
         restore-keys: ${{ runner.os }}-gradle
     - name: Unit tests
-      run: ./gradlew clean assemble check jacocoTestReport
+      run: ./gradlew check jacocoTestReport
     - name: Upload test reports
       if: ${{ always() }}
       uses: actions/upload-artifact@v2
@@ -42,6 +42,8 @@ jobs:
           key: ${{ runner.os }}-gems-${{ hashFiles('Gemfile') }} # change your gemfile path
           restore-keys: ${{ runner.os }}-gems
       - run: pwd
+      - name: Run Detekt
+        run: ./gradlew detekt
       - uses: MeilCli/danger-action@v5
         with:
           plugins_file: '.github/Gemfile'
