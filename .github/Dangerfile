@@ -4,7 +4,5 @@ kotlin_detekt.gradle_task = "detekt"
 kotlin_detekt.report_file = "./flowreactor/build/reports/detekt/detekt.xml"
 kotlin_detekt.detekt
 
-android_lint.lint
-
 junit.parse "./flowreactor/build/test-results/test/*.xml"
 junit.report
