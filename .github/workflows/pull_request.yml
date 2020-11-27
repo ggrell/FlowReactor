@@ -15,6 +15,7 @@ jobs:
       with:
         ruby-version: '2.6'
     - name: Cache Gradle
+      if: always()
       uses: actions/cache@v1.2.0
       with:
         path: |
@@ -23,13 +24,16 @@ jobs:
         key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
         restore-keys: ${{ runner.os }}-gradle-
     - name: Cache gems
+      if: always()
       uses: actions/cache@v1.2.0
       with:
         path: vendor/bundle
         key: ${{ runner.os }}-gems-${{ hashFiles('.github/Gemfile') }}
         restore-keys: ${{ runner.os }}-gems-
     - run: ./gradlew assemble check
-    - uses: MeilCli/danger-action@v5
+    - name: Run Danger
+      if: always()
+      uses: MeilCli/danger-action@v5
       with:
         plugins_file: '.github/Gemfile'
         install_path: 'vendor/bundle'
@@ -38,7 +42,7 @@ jobs:
       env:
         DANGER_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Upload test reports
-      if: ${{ always() }}
+      if: always()
       uses: actions/upload-artifact@v2
       with:
         name: test-reports
