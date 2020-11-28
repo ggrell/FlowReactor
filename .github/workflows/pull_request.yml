@@ -37,7 +37,7 @@ jobs:
         echo "::add-matcher::.github/kotlin-warning-matcher.json"
         ./gradlew assemble check jacocoTestReport coveralls
       env:
-        COVERALLS_REPO_TOKEN: ${{ COVERALLS_REPO_TOKEN }}
+        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
     - name: Run Danger
       if: always()
       uses: MeilCli/danger-action@v5
