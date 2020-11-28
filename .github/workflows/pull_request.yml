@@ -35,7 +35,9 @@ jobs:
         echo "::add-matcher::.github/gradle-java-matcher.json"
         echo "::add-matcher::.github/kotlin-error-matcher.json"
         echo "::add-matcher::.github/kotlin-warning-matcher.json"
-        ./gradlew assemble check jacocoTestReport
+        ./gradlew assemble check jacocoTestReport coveralls
+      env:
+        COVERALLS_REPO_TOKEN: ${{ COVERALLS_REPO_TOKEN }}
     - name: Run Danger
       if: always()
       uses: MeilCli/danger-action@v5
@@ -52,8 +54,3 @@ jobs:
       with:
         name: test-reports
         path: '**/build/reports/tests/'
-    - name: Coveralls
-      uses: coverallsapp/github-action@master
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        path-to-lcov: 'flowreactor/build/reports/jacoco/test/jacocoTestReport.xml'

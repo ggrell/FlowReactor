@@ -1,6 +1,7 @@
 apply plugin: 'java-library'
 apply plugin: 'kotlin'
 apply plugin: 'jacoco'
+//apply plugin: 'com.github.kt3k.coveralls'
 apply plugin: 'org.jetbrains.dokka'
 apply plugin: 'io.gitlab.arturbosch.detekt'
 
