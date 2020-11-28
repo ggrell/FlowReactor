@@ -30,12 +30,14 @@ jobs:
         path: vendor/bundle
         key: ${{ runner.os }}-gems-${{ hashFiles('.github/Gemfile') }}
         restore-keys: ${{ runner.os }}-gems-
-    - name: Gradle assemble check
+    - name: Gradle - build, test, coverage
       run: |
         echo "::add-matcher::.github/gradle-java-matcher.json"
         echo "::add-matcher::.github/kotlin-error-matcher.json"
         echo "::add-matcher::.github/kotlin-warning-matcher.json"
-        ./gradlew assemble check
+        ./gradlew assemble check jacocoTestReport coveralls
+      env:
+        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
     - name: Run Danger
       if: always()
       uses: MeilCli/danger-action@v5
