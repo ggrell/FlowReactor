@@ -30,11 +30,6 @@ compileTestKotlin {
     }
 }
 
-dokka {
-    outputFormat = 'javadoc'
-    outputDirectory = "$buildDir/docs/javadoc"
-}
-
 jacoco {
     toolVersion = versions.jacoco
 }
@@ -69,12 +64,52 @@ task sourcesJar(type: Jar, dependsOn: classes) {
     from sourceSets.main.allSource
 }
 
-task javadocJar(type: Jar, dependsOn: dokka) {
+task javadocJar(type: Jar, dependsOn: dokkaJavadoc) {
     archiveClassifier.set('javadoc')
-    from javadoc.destinationDir
+    from dokkaJavadoc.outputDirectory
 }
 
 artifacts {
     archives sourcesJar
     archives javadocJar
+}
+
+publishing {
+    publications {
+        flowReactor(MavenPublication) {
+            groupId = project.group
+            artifactId = archivesBaseName
+
+            from components.java
+            artifact sourcesJar
+            artifact javadocJar
+
+            pom {
+                name = "FlowReactor for Kotlin Coroutines"
+                description = "A Kotlin framework for a reactive and unidirectional application architecture"
+                url = siteUrl
+
+                licenses {
+                    license {
+                        name = 'BSD 3-Clause License'
+                        url = 'https://github.com/ggrell/RxReactor/blob/master/LICENSE'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id = 'ggrell'
+                        name = 'Gyuri Grell'
+                        email = 'ggrell@pobox.com'
+                    }
+                }
+
+                scm {
+                    connection = gitUrl
+                    developerConnection = gitUrl
+                    url = siteUrl
+                }
+            }
+        }
+    }
 }

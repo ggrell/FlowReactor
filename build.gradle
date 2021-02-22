@@ -1,6 +1,9 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
+    ext.siteUrl = "https://github.com/ggrell/FlowReactor"
+    ext.gitUrl = "https://github.com/ggrell/FlowReactor.git"
+
     ext.buildConfig = [
             minSdk    : 21,
             compileSdk: 28,
@@ -8,10 +11,10 @@ buildscript {
     ]
 
     ext.versions = [
-            kotlin          : '1.4.20',
-            kotlinCoroutines: '1.4.1',
-            dokka           : '0.9.18',
-            flowBinding     : "1.0.0-beta02",
+            kotlin          : '1.4.30',
+            kotlinCoroutines: '1.4.2',
+            dokka           : '1.4.20',
+            flowBinding     : "1.0.0",
 
             // Testing
             jacoco          : '0.8.5',
@@ -68,13 +71,13 @@ buildscript {
     repositories {
         google()
         jcenter()
+        mavenCentral()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.1.1'
+        classpath 'com.android.tools.build:gradle:4.1.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$versions.kotlin"
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:$versions.dokka"
-        classpath "org.jetbrains.dokka:dokka-android-gradle-plugin:$versions.dokka"
     }
 }
 
@@ -87,6 +90,7 @@ allprojects {
     repositories {
         google()
         jcenter()
+        mavenCentral()
     }
 }
 
@@ -95,13 +99,28 @@ task clean(type: Delete) {
 }
 
 subprojects {
+    apply plugin: "maven-publish"
+
     group = "com.gyurigrell"
     def isRelease = Boolean.valueOf(project.hasProperty("release") ? project.property("release") as String : "false")
-    version = "0.9.0" + (isRelease ? "" : "-SNAPSHOT")
+    version = "0.9.1" + (isRelease ? "" : "-SNAPSHOT")
 
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
         kotlinOptions {
             jvmTarget = "1.8"
+        }
+    }
+
+    publishing {
+        repositories {
+            maven {
+                name = "GitHubPackages"
+                url = uri("https://maven.pkg.github.com/ggrell/FlowReactor")
+                credentials {
+                    username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
+                    password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
+                }
+            }
         }
     }
 }
