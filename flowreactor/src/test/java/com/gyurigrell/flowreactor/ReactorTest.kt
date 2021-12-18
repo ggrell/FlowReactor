@@ -1,3 +1,4 @@
+
 package com.gyurigrell.flowreactor
 
 import kotlinx.coroutines.CoroutineScope
@@ -14,6 +15,7 @@ import org.hamcrest.core.IsEqual.equalTo
 import org.junit.After
 import org.junit.Test
 
+@ExperimentalStdlibApi
 @ExperimentalCoroutinesApi
 class ReactorTest {
     private val reactorScope = TestCoroutineScope()
@@ -48,13 +50,13 @@ class ReactorTest {
 
         val resultsLowerCase = mutableListOf<List<String>>()
         reactor.state
-            .map { list -> list.map { it.toLowerCase() }  }
+            .map { list -> list.map { it.lowercase() } }
             .onEach { resultsLowerCase.add(it) }
             .launchIn(reactorScope)
 
         val resultsUpperCase = mutableListOf<List<String>>()
         reactor.state
-            .map { list -> list.map { it.toUpperCase() }  }
+            .map { list -> list.map { it.uppercase() } }
             .onEach { resultsUpperCase.add(it) }
             .launchIn(reactorScope)
 
