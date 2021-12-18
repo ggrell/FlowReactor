@@ -18,7 +18,8 @@
         android:theme="@style/AppTheme">
         <activity
             android:name="com.gyurigrell.flowreactor.MainActivity"
-            android:windowSoftInputMode="adjustResize">
+            android:windowSoftInputMode="adjustResize"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

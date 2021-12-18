@@ -21,7 +21,7 @@ android {
 
     defaultConfig {
         applicationId "com.constantcontact.flowreactor"
-        minSdkVersion buildConfig.compileSdk
+        minSdkVersion buildConfig.minSdk
         targetSdkVersion buildConfig.targetSdk
         versionCode 1
         versionName "1.0"
@@ -47,7 +47,8 @@ dependencies {
     implementation deps.support.appcompat
     implementation deps.support.core
     implementation deps.support.constraintlayout
-    implementation deps.support.lifecycle
+    implementation deps.support.lifecycle.runtime
+    implementation deps.support.lifecycle.viewModel
     implementation deps.support.design
 
     implementation deps.bindings.activity

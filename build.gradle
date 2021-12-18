@@ -5,91 +5,90 @@ buildscript {
     ext.gitUrl = "https://github.com/ggrell/FlowReactor.git"
 
     ext.buildConfig = [
-            minSdk    : 21,
-            compileSdk: 28,
-            targetSdk : 28
+        minSdk    : 21,
+        compileSdk: 31,
+        targetSdk : 31
     ]
 
     ext.versions = [
-            kotlin          : '1.4.31',
-            kotlinCoroutines: '1.4.3',
-            dokka           : '1.4.20',
-            flowBinding     : "1.0.0",
+        kotlin          : '1.5.31',
+        kotlinCoroutines: '1.5.2',
+        flowBinding     : "1.0.0",
+        lifecycle       : '2.4.0',
 
-            // Testing
-            jacoco          : '0.8.5',
-            mockk           : "1.10.2",
-            kluent          : "1.60",
-            detekt          : "1.16.0"
+        // Testing
+        jacoco          : '0.8.7',
+        mockk           : "1.10.2",
+        kluent          : "1.68",
+        detekt          : "1.19.0"
     ]
 
     ext.deps = [
-            junit   : 'junit:junit:4.13',
+        junit   : 'junit:junit:4.13',
 
-            kotlin  : [
-                    stdlib    : [
-                            common: "org.jetbrains.kotlin:kotlin-stdlib-common:${versions.kotlin}",
-                            jdk   : "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${versions.kotlin}",
-                    ],
-                    test      : [
-                            common     : "org.jetbrains.kotlin:kotlin-test-common:${versions.kotlin}",
-                            annotations: "org.jetbrains.kotlin:kotlin-test-annotations-common:${versions.kotlin}",
-                            jvm        : "org.jetbrains.kotlin:kotlin-test:${versions.kotlin}",
-                            junit      : "org.jetbrains.kotlin:kotlin-test-junit:${versions.kotlin}",
-                            reflect    : "org.jetbrains.kotlin:kotlin-reflect:${versions.kotlin}",
-                    ],
-                    coroutines: [
-                            core   : "org.jetbrains.kotlinx:kotlinx-coroutines-core:${versions.kotlinCoroutines}",
-                            native : "org.jetbrains.kotlinx:kotlinx-coroutines-core-native:${versions.kotlinCoroutines}",
-                            android: "org.jetbrains.kotlinx:kotlinx-coroutines-android:${versions.kotlinCoroutines}",
-                            test   : "org.jetbrains.kotlinx:kotlinx-coroutines-test:${versions.kotlinCoroutines}",
-                    ],
+        kotlin  : [
+            stdlib    : [
+                common: "org.jetbrains.kotlin:kotlin-stdlib-common:${versions.kotlin}",
+                jdk   : "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${versions.kotlin}",
             ],
-
-            bindings: [
-                    lifecycle: "io.github.reactivecircus.flowbinding:flowbinding-lifecycle:${versions.flowBinding}",
-                    activity : "io.github.reactivecircus.flowbinding:flowbinding-activity:${versions.flowBinding}",
-                    android  : "io.github.reactivecircus.flowbinding:flowbinding-android:${versions.flowBinding}",
+            test      : [
+                common     : "org.jetbrains.kotlin:kotlin-test-common:${versions.kotlin}",
+                annotations: "org.jetbrains.kotlin:kotlin-test-annotations-common:${versions.kotlin}",
+                jvm        : "org.jetbrains.kotlin:kotlin-test:${versions.kotlin}",
+                junit      : "org.jetbrains.kotlin:kotlin-test-junit:${versions.kotlin}",
+                reflect    : "org.jetbrains.kotlin:kotlin-reflect:${versions.kotlin}",
             ],
-
-            support : [
-                    core            : "androidx.core:core-ktx:1.2.0",
-                    lifecycle       : "androidx.lifecycle:lifecycle-runtime-ktx:2.2.0",
-                    annotations     : "androidx.annotation:annotation:1.1.0",
-                    fragment        : "androidx.fragment:fragment-ktx:1.2.4",
-                    appcompat       : "androidx.appcompat:appcompat:1.1.0",
-                    activity        : "androidx.activity:activity-ktx:1.1.0",
-                    design          : "com.google.android.material:material:1.2.1",
-                    viewModel       : 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.2.0',
-                    constraintlayout: 'androidx.constraintlayout:constraintlayout:1.1.3',
+            coroutines: [
+                core   : "org.jetbrains.kotlinx:kotlinx-coroutines-core:${versions.kotlinCoroutines}",
+                native : "org.jetbrains.kotlinx:kotlinx-coroutines-core-native:${versions.kotlinCoroutines}",
+                android: "org.jetbrains.kotlinx:kotlinx-coroutines-android:${versions.kotlinCoroutines}",
+                test   : "org.jetbrains.kotlinx:kotlinx-coroutines-test:${versions.kotlinCoroutines}",
             ],
+        ],
 
-            mockk   : "io.mockk:mockk:${versions.mockk}",
-            kluent  : "org.amshove.kluent:kluent:${versions.kluent}",
+        bindings: [
+            lifecycle: "io.github.reactivecircus.flowbinding:flowbinding-lifecycle:${versions.flowBinding}",
+            activity : "io.github.reactivecircus.flowbinding:flowbinding-activity:${versions.flowBinding}",
+            android  : "io.github.reactivecircus.flowbinding:flowbinding-android:${versions.flowBinding}",
+        ],
+
+        support : [
+            core            : "androidx.core:core-ktx:1.2.0",
+            annotations     : "androidx.annotation:annotation:1.1.0",
+            fragment        : "androidx.fragment:fragment-ktx:1.2.4",
+            appcompat       : "androidx.appcompat:appcompat:1.1.0",
+            activity        : "androidx.activity:activity-ktx:1.1.0",
+            design          : "com.google.android.material:material:1.2.1",
+            constraintlayout: 'androidx.constraintlayout:constraintlayout:1.1.3',
+            lifecycle       : [
+                runtime  : "androidx.lifecycle:lifecycle-runtime-ktx:${versions.lifecycle}",
+                viewModel: "androidx.lifecycle:lifecycle-viewmodel-ktx:${versions.lifecycle}",
+            ],
+        ],
+
+        mockk   : "io.mockk:mockk:${versions.mockk}",
+        kluent  : "org.amshove.kluent:kluent:${versions.kluent}",
     ]
 
     repositories {
         google()
-        jcenter()
         mavenCentral()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.1.3'
+        classpath 'com.android.tools.build:gradle:7.0.4'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$versions.kotlin"
-        classpath "org.jetbrains.dokka:dokka-gradle-plugin:$versions.dokka"
     }
 }
 
 plugins {
-    id "io.gitlab.arturbosch.detekt" version "1.16.0"
-    id "com.github.kt3k.coveralls" version "2.8.4"
+    id "io.gitlab.arturbosch.detekt" version "1.19.0"
+    id "org.jetbrains.dokka" version "1.6.0"
 }
 
 allprojects {
     repositories {
         google()
-        jcenter()
         mavenCentral()
     }
 }
